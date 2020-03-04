@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <title></title>
+    <script src="js/vue.min.js"></script>
+    <script src="js/mui.min.js"></script>
+    <link href="css/mui.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="css/common.css" />
+    <style>
+			html,
+			body {background-color: #efeff4;}
+			p {text-indent: 22px;}
+			span.mui-icon {font-size: 14px;color: #007aff;margin-left: -15px;padding-right: 10px;}
+			.mui-off-canvas-left {color: #fff;}
+			.title {margin: 35px 15px 10px;}
+			.title+.content {margin: 10px 15px 35px;color: #bbb;text-indent: 1em;font-size: 14px;line-height: 24px;}
+			input {color: #000;}
+			
+			.earth-con:after{content:" "; position: absolute; bottom:0; height:2px; background: white; left: 50%; width:90%; transform: translate(-50%);}
+		</style>
+	</head>
+
+	<body>
+		<div id="main_vue">
+			<div id="offCanvasWrapper" class="mui-off-canvas-wrap mui-draggable">
+				<!--侧滑菜单部分-->
+				<aside id="offCanvasSide" class="mui-off-canvas-left">
+					<div id="offCanvasSideScroll" class="mui-scroll-wrapper">
+						<div class="mui-scroll">
+							<div class="title">星际战甲·平原时间</div>
+							<div class="content">
+								这是星际战甲的平原时间
+							</div>
+							<div class="title" style="margin-bottom: 25px;">选项</div>
+							<ul class="mui-table-view mui-table-view-chevron mui-table-view-inverted">
+								<li class="mui-table-view-cell">
+									使用服务器时间
+									<div class="mui-switch mui-active">
+									  <div class="mui-switch-handle"></div>
+									</div>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</aside>
+				<!--主界面部分-->
+				<div class="mui-inner-wrap">
+					<div id="offCanvasContentScroll" class="mui-content mui-scroll-wrapper">
+						<div class="mui-scroll">
+							
+							<div class="mui-card">
+								<div class="mui-card-content" style="background: url(images/bg-dark.jpg) top center no-repeat;">
+									<div class="earth-con" style="position: relative; width:100%; height:200px; overflow: hidden;">
+										<img src="images/circle_dot.png" class="be-center" style="width:300px; height:300px; top:100%;" />
+										
+										<!--旋转部分-->
+										<div class="be-center" :style="rotatingStyle">
+											<img src="images/cricle-light.png" style="width:100%; height:100%;"/>
+											<img src="images/icon-sun.png" class="be-center" style="top:80px;" />
+											<img src="images/icon-moon.png" class="be-center" style="bottom:40px; top:auto;" />
+										</div>
+										
+										<img src="images/earth.png"  class="be-center" style="width:150px; height:150px; top:100%;"/>
+									</div>
+									
+									<div style="text-align: center; font-size:20px; color:white; line-height:2em;">
+										{{cetusCycle.isDay ? '白天' : '夜晚'}}
+									</div>
+								</div>
+							</div>
+							<div class="mui-card">
+								<div class="mui-card-content" style="padding:2em 0; text-align: center;">
+									<div style="margin:2em 0;">
+										<template v-if="timeArr.length > 0">
+											<img v-for="item in timeArr" :src="'images/num/'+item+'.png'" />
+										</template>
+									</div>
+									<div>剩余时间：{{timeFormattedStr}}</div>
+								</div>
+							</div>
+	
+						</div>
+					</div>
+					<!-- off-canvas backdrop -->
+					<div class="mui-off-canvas-backdrop"></div>
+				</div>
+			</div>
+		</div>
+		<script>
+		var $vue = new Vue({
+      		el: '#main_vue',
+      		data: {
+      			cetusCycle:{}
+      		},
+      		methods: {
+      			queryData: function(){
+      				var that = this;
+      				mui.get('https://api.warframestat.us/pc', function(data){
+						that.cetusCycle = data.cetusCycle;
+					})
+      			}
+      		},
+      		computed: {
+      			timeLeft: function(){
+      				var timeLeft = this.cetusCycle.timeLeft || '';
+      				if(/m/.test(timeLeft)){
+      					return timeLeft.split('m')[0] || '-';
+      				}else{
+      					return '0'
+      				}
+      			},
+      			timeArr: function(){
+      				var tl = this.timeLeft || '';
+      				tl = tl.replace(/h /g, "h") + 'm';
+      				return tl.split('') || [];
+      			},
+      			timeFormattedStr: function(){
+      				return this.timeLeft.replace(/h /g, '小时') + '分钟';
+      			},
+      			minuteView: function(){
+      				var tl = this.timeLeft,
+      				h = 0,
+      				M = 0;
+      				
+      				if(/h /.test(tl)){
+      					h = parseInt(tl.split('h ')[0]),
+      					M = parseInt(tl.split('h ')[1]);
+      				}else{
+      					M = parseInt(tl);
+      				}
+      				
+      				
+      				return h*60 + M || '0';
+      			},
+      			rotatingStyle: function(){
+      				var rotate = 0,
+      				oricle = 120;
+      				if(this.cetusCycle.isDay === undefined){
+      					oricle = 0;
+      				}else if(this.cetusCycle.isDay){
+      					oricle = 120;
+      				}else{
+      					oricle = 240;
+      				}
+      				
+      				rotate = oricle - (this.minuteView * 2.4);
+      				
+      				return {
+      					width: '370px',
+      					height: '370px',
+      					top: '100%',
+      					transition: 'transform 2s',
+      					transform: 'translate(-50%, -50%) rotate(' + rotate + 'deg)'
+      				}
+      			}
+      		},
+      		mounted: function(){
+      			
+				mui.init();
+				
+				 //主界面和侧滑菜单界面均支持区域滚动；
+				mui('#offCanvasSideScroll').scroll();
+				mui('#offCanvasContentScroll').scroll();
+				
+      			
+      			var that = this;
+      			
+      			var ajaxObj = {
+      				url: 'https://api.warframestat.us/pc',
+      				type: 'get',
+      				success: function(data){
+      					that.cetusCycle = data.cetusCycle;
+      					setTimeout(function(){
+      						mui.ajax(ajaxObj);
+      					}, 30000);
+      				},
+      				error: function(){
+      					mui.ajax(ajaxObj);
+      				}
+      			}
+      			
+      			mui.ajax(ajaxObj);
+      		}
+      	})
+		</script>
+	</body>
+
+</html>

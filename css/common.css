@@ -1,0 +1,5 @@
+[v-cloak]{display: none;}
+
+#main_vue{position: absolute; left:0; right:0; top:0; bottom:0;}
+
+.be-center{position: absolute; left: 50%; top:50%; transform: translate(-50%, -50%);}
